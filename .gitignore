@@ -210,3 +210,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Customized
+**/settings/prod.py
