@@ -83,7 +83,7 @@ def StudentDetailView(request, pk):
 @api_view(["GET", "POST"])
 def ScoreView(request):
     if request.method == "GET":
-        qs = get_object_or_404(Score.objects.all())
+        qs = Score.objects.all()
         serializer = ScoreSerializer(qs, many=True)
         response = Response(serializer.data)
         return response
@@ -114,3 +114,27 @@ def ScoreDetailView(request, pk):
     elif request.method == "DELETE":
         qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+from django.http import Http404
+from django.shortcuts import get_list_or_404
+
+
+# [심화]
+# GET /students/1/score : 1번학생의 모든 점수 데이터 조회
+# POST /students/1/score : 1번학생의 모든 점수 데이터 추가
+@api_view(["GET", "POST"])
+def StudentScoreView(request, pk):
+    if request.method == "GET":
+        qs = get_list_or_404(Score.objects.filter(student_id=pk))
+        # qs = Score.objects.filter(student_id=pk).all()
+        # if not qs:
+        #     raise Http404("찾으시는 리소스가 없습니다.")
+        serializer = ScoreSerializer(qs, many=True)
+        return Response(serializer.data)
+    elif request.method == "POST":
+        serializer = ScoreSerializer(data={**request.data, "student": pk})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
