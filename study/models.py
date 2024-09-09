@@ -15,3 +15,16 @@ class Score(models.Model):
     science = models.IntegerField()
 
     exam_date = models.DateTimeField(null=True)
+
+
+# ManyToMany
+class Department(models.Model):
+    """
+    Student와 다대다 연결.
+    eg. 미화부, 도서부, 방송부, 신문부...
+
+    django ManyToMany
+    공식문서 ManyToMany
+    """
+
+    pass
