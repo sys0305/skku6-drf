@@ -28,6 +28,9 @@ class ScoreSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Score
-        fields = ["student", "english", "math", "science", "exam_date"]
+        fields = [
+            "student", "english", "math", "science", "exam_date", "total"
+        ]
+        read_only_fields = ["total"]
 
     # student = StudentSerializer()

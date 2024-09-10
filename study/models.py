@@ -13,8 +13,11 @@ class Score(models.Model):
     english = models.IntegerField()
     math = models.IntegerField()
     science = models.IntegerField()
-
     exam_date = models.DateTimeField(null=True)
+
+    @property
+    def total(self):
+        return self.english + self.math + self.science
 
 
 # ManyToMany

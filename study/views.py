@@ -340,6 +340,7 @@ class ScoreViewSet(ViewSet):
 
 
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import action
 
 
 # ModelViewSet
@@ -355,6 +356,31 @@ class StudentViewSet(ModelViewSet):
             qs = qs.filter(name=name)
         return qs
 
+    # /students/
+    # /studetns/1/
+
+    # /students/seoul
+    @action(["GET"], detail=False)
+    def seoul(self, request):
+        qs = self.get_queryset()
+        qs = qs.filter(address__contains="서울")
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    # /students/4/reset => {name: '-', address: '-', email: '-'}
+    @action(["PUT"], detail=True)
+    def reset(self, request, pk):
+        instance = self.get_object()
+        instance.name = "-"
+        instance.address = "-"
+        instance.email = "-"
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+
+from django.db.models import F
+
 
 class ScoreViewSet(ModelViewSet):
     # score에서 params로 각 과목의 점수가 입력되면, 해당 점수 이상인 score들만 반영되도록
@@ -362,6 +388,43 @@ class ScoreViewSet(ModelViewSet):
     #       -> math가 80이상이고 english가 60이상인 score들 반환
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
+
+    # 3. order 파라메터가 있을경우 해당 파라메터값으로 정렬해주세요
+    # url example: /study/score/?order=math&math=80&english=60&
+    #       => math별로 내림차순 정렬
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # https://www.naver.com/search.naver?where=news
+        filter_kwargs = {}
+        for subject in [
+                "math",
+                "english",
+                "science",
+        ]:
+            _subject = self.request.query_params.get(subject)
+            if _subject:
+                filter_kwargs[f"{subject}__gte"] = _subject
+        qs = qs.filter(**filter_kwargs)
+
+        order = self.request.query_params.get("order")
+        if order:
+            qs = qs.order_by(f"-{order}")
+
+        return qs
+
+    # 4. score 서비스에 /top 을 넣으면 모든점수의 합이 270점이 넘는사람만 조회해주세요.
+    #       => django model F객체 GreaterThan
+    @action(["GET"], detail=False)
+    def top(self, request):
+        qs = self.get_queryset()
+        qs = qs.annotate(total2=F("math") + F("english") + F("science"))
+        qs = qs.filter(total2__gte=270)
+        # from django.db.models.lookups import GreaterThan
+
+        # qs = qs.filter(
+        #     GreaterThan(F("math") + F("english") + F("science"), 270))
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
 
 
 from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
