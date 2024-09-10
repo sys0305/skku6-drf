@@ -347,7 +347,36 @@ class StudentViewSet(ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # https://www.naver.com/search.naver?where=news
+        name = self.request.query_params.get("name")
+        if name:
+            qs = qs.filter(name=name)
+        return qs
+
 
 class ScoreViewSet(ModelViewSet):
+    # score에서 params로 각 과목의 점수가 입력되면, 해당 점수 이상인 score들만 반영되도록
+    # url example: /study/score/?math=80&english=60
+    #       -> math가 80이상이고 english가 60이상인 score들 반환
     queryset = Score.objects.all()
     serializer_class = ScoreSerializer
+
+
+from rest_framework.viewsets import ReadOnlyModelViewSet, GenericViewSet
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
+
+
+class ReadOnlyStudentViewSet(ReadOnlyModelViewSet):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+
+
+# GET, POST
+class ReadWriteStudentViewSet(ListModelMixin, RetrieveModelMixin,
+                              CreateModelMixin, GenericViewSet):
+    # / :GET, POST
+    # /<int:pk> :GET
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
