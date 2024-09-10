@@ -252,54 +252,35 @@ from rest_framework.viewsets import ViewSet
 
 class StudentViewSet(ViewSet):
 
+    def get_object(self, pk):
+        qs = get_object_or_404(Student, pk=pk)
+        return qs
+
     def list(self, request):
         # 목록조회
-        pass
-
-    def retrieve(self, request, pk=None):
-        # 상세 조회
-        pass
-
-    def create(self, request):
-        pass
-
-    def update(self, request, pk=None):
-        pass
-
-    def destroy(self, request, pk=None):
-        pass
-
-
-class StudentView(APIView):
-    # /students [GET, POST]
-
-    def get(self, request):
+        # /students GET
         qs = Student.objects.prefetch_related("score_set").all()
         # ListSerializer if many=True
         serializer = StudentSerializer(qs, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
+    def create(self, request):
+        # 생성
+        # /students POST
         serializer = StudentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class StudentDetailView(APIView):
-    # /students/<int:pk> [GET, PUT, DELETE]
-
-    def get_object(self, pk):
-        qs = get_object_or_404(Student, pk=pk)
-        return qs
-
-    def get(self, request, pk):
+    def retrieve(self, request, pk=None):
+        # 상세 조회 (StudentDetailView's get)
         qs = self.get_object(pk)
         serializer = StudentSerializer(qs)
         return Response(serializer.data)
 
-    def put(self, request, pk):
+    def update(self, request, pk=None):
+        # 수정 (StudentDetailView's put)
         qs = self.get_object(pk)
         serializer = StudentSerializer(qs, data=request.data)
         if serializer.is_valid():
@@ -307,7 +288,66 @@ class StudentDetailView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
+    def destroy(self, request, pk=None):
+        # 삭제 (StudentDetailView's delete)
         qs = self.get_object(pk)
         qs.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ScoreViewSet(ViewSet):
+    """
+    /score/ GET             : list
+    /score/ POST            : create
+    /score/<int:pk> GET     : retrieve
+    /score/<int:pk> PUT     : update
+    /score/<int:pk> DELETE  : destroy
+    """
+
+    def list(self, request):
+        qs = Score.objects.all()
+        serializer = ScoreSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = ScoreSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_object(self, pk):
+        qs = get_object_or_404(Score, pk=pk)
+        return qs
+
+    def retrieve(self, request, pk):
+        qs = self.get_object(pk)
+        serializer = ScoreSerializer(qs)
+        return Response(serializer.data)
+
+    def update(self, request, pk):
+        qs = self.get_object(pk)
+        serializer = ScoreSerializer(qs, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk):
+        qs = self.get_object(pk)
+        qs.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+from rest_framework.viewsets import ModelViewSet
+
+
+# ModelViewSet
+class StudentViewSet(ModelViewSet):
+    queryset = Student.objects.all()
+    serializer_class = StudentSerializer
+
+
+class ScoreViewSet(ModelViewSet):
+    queryset = Score.objects.all()
+    serializer_class = ScoreSerializer
