@@ -19,6 +19,7 @@ class StudentSerializer(serializers.ModelSerializer):
         fields = ["name", "address", "email", "score_set"]
 
     score_set = ScoreListSerializer(many=True, read_only=True)
+    # score_set = ScoreListSerializer(many=True)
 
 
 # Serializer도 추가해주세요.
